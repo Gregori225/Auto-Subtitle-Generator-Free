@@ -1,15 +1,13 @@
 import os
 import gradio as gr
 from subtitle import subtitle_maker,LANGUAGE_CODE
-source_lang_list = ['Automatic', "English", "Hindi", "Bengali"]
-available_language = LANGUAGE_CODE.keys()
-source_lang_list.extend(available_language)
 
-target_lang_list = ["English", "Hindi", "Bengali"]
-target_lang_list.extend(available_language)
+# Construir listas de idiomas sin duplicados
+available_languages = sorted(list(LANGUAGE_CODE.keys()))
+source_lang_list = ['Automatic'] + available_languages
+target_lang_list = available_languages
 
-
-def temp_demo(media_files, source_lang, target_lang):
+def temp_demo(media_files, source_lang, target_lang, progress=gr.Progress()):
     if not media_files:
         return None, "", None, None, None, None
     
@@ -18,15 +16,22 @@ def temp_demo(media_files, source_lang, target_lang):
 
     all_custom, all_transcripts, all_word, all_shorts, all_txt, all_translated = [], [], [], [], [], []
 
-    for media_file in media_files:
-        _, translated_srt_path, custom_srt, word_srt, shorts_srt, txt_path, _, _, transcript = subtitle_maker(media_file, source_lang, target_lang)
+    for i, media_file in enumerate(media_files):
+        # Extraer la ruta real del archivo temporal de Gradio
+        file_path = media_file.name if hasattr(media_file, 'name') else str(media_file)
+        base_name = os.path.basename(file_path)
+        
+        progress(i / len(media_files), desc=f"Procesando ({i+1}/{len(media_files)}): {base_name}")
+        
+        _, translated_srt_path, custom_srt, word_srt, shorts_srt, txt_path, _, _, transcript = subtitle_maker(file_path, source_lang, target_lang)
         
         all_custom.append(custom_srt)
-        all_transcripts.append(f"--- {os.path.basename(media_file.name) if hasattr(media_file, 'name') else 'File'} ---\n{transcript}")
+        all_transcripts.append(f"--- {base_name} ---\n{transcript}")
         all_word.append(word_srt)
         all_shorts.append(shorts_srt)
         all_txt.append(txt_path)
-        all_translated.append(translated_srt_path)
+        if translated_srt_path:
+            all_translated.append(translated_srt_path)
 
     return (all_custom, "\n\n".join(all_transcripts), all_word, all_shorts, all_txt, all_translated)
 

@@ -155,6 +155,7 @@ def get_language_name(code):
 
 def clean_file_name(file_path):
     """Generates a clean, unique file name to avoid path issues."""
+    file_path = str(file_path)
     dir_name = os.path.dirname(file_path)
     base_name, extension = os.path.splitext(os.path.basename(file_path))
 
@@ -205,6 +206,8 @@ def whisper_subtitle(uploaded_file, source_language):
     Main transcription function. Loads the model, transcribes the audio,
     and generates subtitle files.
     """
+    uploaded_file = str(uploaded_file)
+    
     # 1. Configure device and model
     device = "cuda" if torch.cuda.is_available() else "cpu"
     compute_type = "float16" if torch.cuda.is_available() else "int8"
